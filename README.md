@@ -116,66 +116,7 @@ pnpm start
 
 ## Deployment
 
-The app is deployed as three services: **Supabase** (database), **Render** (API) and **Vercel** (web). Deploy them in this order, because each one needs a value from the previous one.
-
-### 1. Database: Supabase
-
-1. Create a project and save the database password.
-2. Click **Connect** and copy the **Session pooler** connection string (port `5432`, host `...pooler.supabase.com`).
-3. Append `?sslmode=require`. This is your `DATABASE_URL`.
-
-Use the session pooler, not the direct host or the transaction pooler. The direct host is IPv6-only on the free tier, and Render connects over IPv4. The transaction pooler (port `6543`) breaks the advisory lock that the migrations use. URL-encode any special characters in the password.
-
-Tables are created by the migrations on first boot, so there is no SQL to run.
-
-### 2. API: Render
-
-Create a **Web Service** from this repo (`benzsupaluk/meeting-manager`):
-
-| Setting | Value |
-| --- | --- |
-| Root Directory | `meeting-manager-backend` |
-| Runtime | Docker (`./Dockerfile`) |
-| Health Check Path | `/api/health` |
-
-Environment variables:
-
-| Variable | Value |
-| --- | --- |
-| `NODE_ENV` | `production` |
-| `DB_DRIVER` | `postgres` |
-| `DATABASE_URL` | Supabase session pooler URL with `?sslmode=require` |
-| `JWT_SECRET` | A long random string, e.g. `openssl rand -base64 48` |
-| `JWT_EXPIRES_IN` | `1d` |
-| `CORS_ORIGIN` | The Vercel URL, with no trailing slash |
-| `SEED_DEMO_DATA` | `true` for a demo, otherwise `false` |
-
-Render sets `PORT` itself. Check that `https://<service>.onrender.com/api/health` responds. Because of the Root Directory, only changes in `meeting-manager-backend/` trigger a redeploy.
-
-### 3. Web: Vercel
-
-Import this repo and set:
-
-| Setting | Value |
-| --- | --- |
-| Root Directory | `meeting-manager-frontend` |
-| Node.js version | 22 |
-| `NEXT_PUBLIC_API_URL` | `https://<service>.onrender.com/api` |
-
-`NEXT_PUBLIC_API_URL` is inlined at build time, so redeploy after changing it.
-
-### 4. Connect them
-
-Set `CORS_ORIGIN` on Render to the final Vercel URL and let Render redeploy.
-
-### Troubleshooting
-
-| Symptom | Fix |
-| --- | --- |
-| `self-signed certificate in certificate chain` in the API logs | Change the URL to `sslmode=no-verify`. The connection stays encrypted but the certificate isn't verified. |
-| CORS errors in the browser | `CORS_ORIGIN` must match the Vercel origin exactly: no trailing slash, and preview deployments have different URLs. Use a comma-separated list for several. |
-| The frontend calls `localhost` | Redeploy Vercel after setting `NEXT_PUBLIC_API_URL`. |
-| The first request takes 30 to 60 seconds | The Render free tier sleeps when idle. Open the health URL first. |
+The app is deployed as three services: **Supabase** (database), **Render** (API) and **Vercel** (web).
 
 ## Test and check
 
