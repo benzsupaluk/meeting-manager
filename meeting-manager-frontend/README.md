@@ -8,13 +8,26 @@ Built with **Next.js 16 (App Router) · TypeScript · Zustand · Tailwind CSS v4
 
 | Page | Route | What it does |
 | --- | --- | --- |
-| Login | `/login` | Email + password, or **Continue as Guest** |
-| Dashboard | `/dashboard` | "Upcoming Meetings" card list with **infinite scroll**, Upcoming/Past/All tabs, status filter and debounced search; today's meetings panel |
+| Login | `/login` | Email + password, or **Continue as Guest** (view-only, see below) |
+| Dashboard | `/dashboard` | "Upcoming Meetings" card list with **infinite scroll**, Upcoming/Past/All tabs, status filter and debounced search; today's meetings panel. Each card shows the creator's email |
 | Booking form | `/meetings/new` | Candidate autocomplete (or free text), position, date picker, start/end time, Onsite / Zoom / Google Meet, location or link, status, notes |
 | Edit meeting | `/meetings/:id/edit` | Same form, pre-filled |
-| Candidate summary | `/candidates/:id` | Profile header with **Edit Meeting / Cancel Meeting / Add Feedback**, meeting info, interview notes, history timeline (past interviews + evaluations) |
+| Candidate summary | `/candidates/:id` | Profile header with **Edit Meeting / Cancel Meeting / Add Feedback**, meeting info with creator email, interview notes (read-only view with an **Edit** toggle once notes exist), history timeline (past interviews + evaluations) |
 
 Each meeting card also has a menu to edit it, confirm it, cancel it, or delete it (with a confirmation step).
+
+Meetings without a recorded creator (created before the backend tracked one) show the demo recruiter as their creator.
+
+### Guest access
+
+**Continue as Guest** signs in as a shared account with `role: "guest"`. Guests can browse meetings, open candidate details and use join links. The app hides scheduling, editing and cancelling for them:
+
+- No **Schedule Meeting** nav item, sidebar card or dashboard button.
+- `/meetings/new` redirects to `/dashboard` with a toast; `/meetings/:id/edit` shows a notice instead of the form.
+- **Edit** and **Cancel** are removed from meeting menus and the candidate header, and **Cancelled** is removed from the status dropdown.
+- The header shows "Guest access" instead of an email.
+
+Use `useIsGuest()` from `stores/auth-store` and `<MembersOnly>` from `features/auth/members-only` to gate new member-only UI. The backend only enforces the create rule (`403` on `POST /meetings`), so the edit and cancel restrictions are UI-only.
 
 ## Getting started
 
@@ -84,7 +97,3 @@ Key decisions:
 - **Auth.** The JWT is persisted in localStorage and rehydrated after mount, so server and client render the same markup. A 401 from the API clears the session and the guard redirects to `/login?next=…`; the `next` value only accepts same-origin paths, so it can't be used for open redirects.
 - **Forms.** react-hook-form with zod schemas. Field errors from the server are mapped back onto the matching inputs. Date and time inputs are combined in the user's local timezone and sent as ISO strings.
 - **Accessibility.** The autocomplete follows the combobox/listbox pattern, meeting type and rating use radio groups, and the dialogs are focus-trapped (Radix).
-
-### Theme
-
-Primary text color is `#666666`, primary color is `#2596be`, and the layout is white and minimal. Tokens are defined in `src/app/globals.css`, including `--heading`, `--success` and `--warning`.

@@ -58,7 +58,7 @@ docker compose up --build
 | API | http://localhost:4000/api |
 | Postgres | localhost:5432 (user `meeting`, password `meeting`, db `meeting_manager`) |
 
-Demo login: `recruiter@example.com` / `password123`, or click **Continue as Guest**.
+Demo login: `recruiter@example.com` / `password123`, or click **Continue as Guest**. Guests can browse meetings, open details and use join links, but can't schedule, edit or cancel meetings.
 
 Optional overrides (environment variables or a `.env` next to `docker-compose.yml`): `DB_PORT`, `JWT_SECRET`, `WEB_ORIGIN`, `PUBLIC_API_URL`.
 

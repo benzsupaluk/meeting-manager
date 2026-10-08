@@ -25,7 +25,7 @@ docker compose up --build
 | API | http://localhost:4000/api |
 | Postgres | localhost:5432 (`meeting` / `meeting`, db `meeting_manager`) |
 
-Demo login: `recruiter@example.com` / `password123`. You can also use **Continue as Guest**.
+Demo login: `recruiter@example.com` / `password123`. You can also use **Continue as Guest**, which signs in as a shared read-only guest account (see [Roles](#roles)).
 
 You can override these with environment variables or a `.env` file next to `docker-compose.yml`:
 
@@ -84,12 +84,23 @@ All routes are under `/api`. Every route except `/health` and `/auth/*` requires
 | GET | `/auth/me` | — | `{ user }` |
 | POST | `/auth/logout` | — | `204` (tokens are stateless; the client discards its copy) |
 
+`user` is `{ id, email, name, role }`, where `role` is `member` or `guest`.
+
+### Roles
+
+| Role | Who | Restrictions |
+| --- | --- | --- |
+| `member` | Any regular account | None |
+| `guest` | The shared account behind `/auth/guest` | Can read everything; `POST /meetings` returns `403 FORBIDDEN` |
+
+The role is derived from the account's email, so existing tokens keep working.
+
 ### Meetings
 
 | Method | Path | Notes |
 | --- | --- | --- |
 | GET | `/meetings` | Query: `page` (1), `limit` (10, max 50), `scope` = `upcoming` \| `past` \| `all`, `status` (comma-separated), `search`, `candidateId`, `from`, `to` (ISO) |
-| POST | `/meetings` | Create |
+| POST | `/meetings` | Create (members only). The signed-in user is stored as `createdBy` |
 | GET | `/meetings/:id` | |
 | PATCH | `/meetings/:id` | Partial update |
 | DELETE | `/meetings/:id` | `204` |
@@ -111,6 +122,8 @@ Meeting payload:
 }
 ```
 
+Every meeting in a response also includes `createdBy: { id, name, email } | null`.
+
 List response shape: `{ data: Meeting[], meta: { page, limit, total, totalPages, hasMore } }`.
 
 ### Candidates
@@ -131,7 +144,7 @@ All errors use the same shape:
 { "error": { "code": "VALIDATION_ERROR", "message": "Invalid request", "details": [{ "field": "endAt", "message": "…" }] } }
 ```
 
-Possible codes: `400 VALIDATION_ERROR | BAD_JSON`, `401 UNAUTHORIZED`, `404 NOT_FOUND`, `500 INTERNAL_ERROR`.
+Possible codes: `400 VALIDATION_ERROR | BAD_JSON`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `500 INTERNAL_ERROR`.
 
 ## Architecture
 
