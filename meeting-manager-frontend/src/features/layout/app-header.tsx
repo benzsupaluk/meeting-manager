@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { initials } from "@/lib/format";
-import { useAuthStore } from "@/stores/auth-store";
+import { useAuthStore, useIsGuest } from "@/stores/auth-store";
 import { SidebarContent } from "./app-sidebar";
 import { PAGE_HEADINGS } from "./nav-items";
 
@@ -24,6 +24,8 @@ export function AppHeader() {
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const isGuest = useIsGuest();
+  const subtitle = isGuest ? "Guest access" : user?.email;
   const [menuOpen, setMenuOpen] = useState(false);
   const heading = PAGE_HEADINGS.find((h) => h.match.test(pathname));
 
@@ -66,7 +68,7 @@ export function AppHeader() {
               </Avatar>
               <span className="hidden min-w-0 md:block">
                 <span className="block truncate text-sm font-medium text-heading">{user.name}</span>
-                <span className="block truncate text-xs">{user.email}</span>
+                <span className="block truncate text-xs">{subtitle}</span>
               </span>
               <ChevronDown className="hidden size-4 md:block" />
             </button>
@@ -74,7 +76,7 @@ export function AppHeader() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel className="font-normal">
               <p className="text-sm font-medium text-heading">{user.name}</p>
-              <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+              <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={logout}>

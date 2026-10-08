@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, type ReactNode } from "react";
+import { toast } from "sonner";
+import { PageSpinner } from "@/components/page-spinner";
 import { Button } from "@/components/ui/button";
 import { useIsGuest } from "@/stores/auth-store";
 
@@ -19,4 +22,15 @@ export function GuestNotice({ message }: { message: string }) {
       </Button>
     </div>
   );
+}
+
+/** Fallback that sends the guest elsewhere, with a toast explaining why. */
+export function GuestRedirect({ to, message }: { to: string; message: string }) {
+  const router = useRouter();
+  useEffect(() => {
+    // Fixed id so a double-run effect (Strict Mode) doesn't stack toasts.
+    toast.info(message, { id: "guest-redirect" });
+    router.replace(to);
+  }, [router, to, message]);
+  return <PageSpinner />;
 }

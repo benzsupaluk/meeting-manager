@@ -60,6 +60,8 @@ export function LoginForm() {
       await loginAsGuest();
     } catch (error) {
       toast.error(getErrorMessage(error));
+    } finally {
+      // cacheComponents keeps /login mounted while hidden, so reset or it's still spinning after logout.
       setGuestLoading(false);
     }
   };

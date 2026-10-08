@@ -1,4 +1,3 @@
-import { UserRound } from "lucide-react";
 import type { Meeting, MeetingCreator as Creator } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
