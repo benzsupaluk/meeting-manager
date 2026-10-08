@@ -7,6 +7,7 @@ import { formatMeetingRange, initials } from "@/lib/format";
 import type { Meeting } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { MeetingActionsMenu } from "./meeting-actions-menu";
+import { MeetingCreator } from "./meeting-creator";
 import { MeetingLocation } from "./meeting-location";
 import { StatusBadge } from "./status-badge";
 import { useRouter } from "next/navigation";
@@ -45,7 +46,7 @@ export const MeetingCard = memo(function MeetingCard({ meeting }: { meeting: Mee
         </Avatar>
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold leading-snug">
-            {candidate.name} <span className="font-normal text-muted-foreground">–</span>{" "}
+            {candidate.name} <span className="font-normal text-muted-foreground">|</span>{" "}
             <span className="font-medium text-foreground">{candidate.position}</span>
           </h3>
           <p className="truncate text-sm text-muted-foreground">{meeting.title}</p>
@@ -53,14 +54,17 @@ export const MeetingCard = memo(function MeetingCard({ meeting }: { meeting: Mee
         <MeetingActionsMenu meeting={meeting} />
       </div>
 
-      <div className="space-y-2">
-        <p className="flex items-center gap-2 text-sm">
-          <CalendarClock className="size-4 shrink-0 text-brand-ink" aria-hidden />
-          <span className={cn(inactive && "line-through")}>
-            {formatMeetingRange(meeting.startAt, meeting.endAt)}
-          </span>
-        </p>
-        <MeetingLocation meeting={meeting} />
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
+          <p className="flex items-center gap-2 text-sm">
+            <CalendarClock className="size-4 shrink-0 text-brand-ink" aria-hidden />
+            <span className={cn(inactive && "line-through")}>
+              {formatMeetingRange(meeting.startAt, meeting.endAt)}
+            </span>
+          </p>
+          <MeetingLocation meeting={meeting} />
+        </div>
+        <MeetingCreator meeting={meeting} />
       </div>
 
       <div className="mt-auto flex items-center justify-between gap-3 border-t pt-4">

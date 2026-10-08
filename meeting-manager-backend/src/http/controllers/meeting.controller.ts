@@ -23,7 +23,7 @@ export class MeetingController {
 
   create = async (req: Request, res: Response) => {
     const input = parse(CreateMeetingSchema, req.body);
-    res.status(201).json(await this.meetings.create(input));
+    res.status(201).json(await this.meetings.create(input, req.user!.id));
   };
 
   update = async (req: Request, res: Response) => {

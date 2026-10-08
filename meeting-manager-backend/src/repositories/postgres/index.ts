@@ -26,6 +26,9 @@ interface MeetingRow {
   type: Meeting['type'];
   location: string;
   status: Meeting['status'];
+  creator_id: string | null;
+  creator_name: string | null;
+  creator_email: string | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -40,13 +43,16 @@ const toMeeting = (r: MeetingRow): Meeting => ({
   type: r.type,
   location: r.location,
   status: r.status,
+  createdBy: r.creator_id ? { id: r.creator_id, name: r.creator_name!, email: r.creator_email! } : null,
   createdAt: iso(r.created_at),
   updatedAt: iso(r.updated_at),
 });
 
-const MEETING_SELECT = `
-  SELECT m.*, c.name AS candidate_name, c.position AS candidate_position
-  FROM meetings m JOIN candidates c ON c.id = m.candidate_id`;
+const MEETING_COLUMNS = `m.*, c.name AS candidate_name, c.position AS candidate_position,
+  u.id AS creator_id, u.name AS creator_name, u.email AS creator_email`;
+const MEETING_FROM = `meetings m JOIN candidates c ON c.id = m.candidate_id
+  LEFT JOIN users u ON u.id = m.created_by`;
+const MEETING_SELECT = `SELECT ${MEETING_COLUMNS} FROM ${MEETING_FROM}`;
 
 class PgMeetingRepository implements MeetingRepository {
   constructor(private readonly pool: pg.Pool) {}
@@ -71,9 +77,8 @@ class PgMeetingRepository implements MeetingRepository {
 
     const order = query.scope === 'past' ? 'DESC' : 'ASC';
     const sql = `
-      SELECT m.*, c.name AS candidate_name, c.position AS candidate_position,
-             COUNT(*) OVER()::int AS total_count
-      FROM meetings m JOIN candidates c ON c.id = m.candidate_id
+      SELECT ${MEETING_COLUMNS}, COUNT(*) OVER()::int AS total_count
+      FROM ${MEETING_FROM}
       ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
       ORDER BY m.start_at ${order}, m.id
       LIMIT ${bind(query.limit)} OFFSET ${bind((query.page - 1) * query.limit)}`;
@@ -98,10 +103,10 @@ class PgMeetingRepository implements MeetingRepository {
     return rows[0] ? toMeeting(rows[0]) : null;
   }
 
-  async create(input: MeetingWrite) {
+  async create(input: MeetingWrite, createdById: string | null) {
     const { rows } = await this.pool.query<{ id: string }>(
-      `INSERT INTO meetings (candidate_id, title, description, start_at, end_at, type, location, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+      `INSERT INTO meetings (candidate_id, title, description, start_at, end_at, type, location, status, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
       [
         input.candidateId,
         input.title,
@@ -111,6 +116,7 @@ class PgMeetingRepository implements MeetingRepository {
         input.type,
         input.location,
         input.status,
+        createdById,
       ],
     );
     return (await this.findById(rows[0]!.id))!;

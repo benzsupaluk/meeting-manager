@@ -2,10 +2,19 @@ export type MeetingStatus = "pending" | "confirmed" | "cancelled" | "completed";
 export type MeetingType = "onsite" | "zoom" | "google_meet";
 export type MeetingScope = "upcoming" | "past" | "all";
 
+export type UserRole = "member" | "guest";
+
 export interface User {
   id: string;
   email: string;
   name: string;
+  role: UserRole;
+}
+
+export interface MeetingCreator {
+  id: string;
+  name: string;
+  email: string;
 }
 
 export interface CandidateSummary {
@@ -24,6 +33,8 @@ export interface Meeting {
   type: MeetingType;
   location: string;
   status: MeetingStatus;
+  /** Null for meetings booked before creators were tracked. */
+  createdBy: MeetingCreator | null;
   createdAt: string;
   updatedAt: string;
 }

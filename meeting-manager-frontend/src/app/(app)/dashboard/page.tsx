@@ -2,6 +2,7 @@ import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { MembersOnly } from "@/features/auth/members-only";
 import { MeetingFilters } from "@/features/meetings/meeting-filters";
 import { MeetingList } from "@/features/meetings/meeting-list";
 import { StatusLegend } from "@/features/meetings/status-legend";
@@ -23,12 +24,14 @@ export default function DashboardPage() {
             </h2>
             <p className="text-sm">Interviews with candidates across all roles</p>
           </div>
-          <Button asChild size="lg">
-            <Link href="/meetings/new">
-              <Plus />
-              Schedule Meeting
-            </Link>
-          </Button>
+          <MembersOnly>
+            <Button asChild size="lg">
+              <Link href="/meetings/new">
+                <Plus />
+                Schedule Meeting
+              </Link>
+            </Button>
+          </MembersOnly>
         </div>
         <MeetingFilters />
         <MeetingList />

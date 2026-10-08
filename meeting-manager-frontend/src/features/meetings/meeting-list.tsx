@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { useIsGuest } from "@/stores/auth-store";
 import { useMeetingsStore } from "@/stores/meetings-store";
 import { MeetingCard } from "./meeting-card";
 
@@ -18,6 +19,7 @@ export function MeetingList() {
   const error = useMeetingsStore((s) => s.error);
   const fetchFirstPage = useMeetingsStore((s) => s.fetchFirstPage);
   const fetchNextPage = useMeetingsStore((s) => s.fetchNextPage);
+  const isGuest = useIsGuest();
 
   useEffect(() => {
     void fetchFirstPage();
@@ -57,11 +59,13 @@ export function MeetingList() {
     return (
       <EmptyState
         title="No meetings found"
-        description="Try a different filter, or schedule a new interview."
+        description={isGuest ? "Try a different filter." : "Try a different filter, or schedule a new interview."}
         action={
-          <Button asChild>
-            <Link href="/meetings/new">Schedule a meeting</Link>
-          </Button>
+          !isGuest && (
+            <Button asChild>
+              <Link href="/meetings/new">Schedule a meeting</Link>
+            </Button>
+          )
         }
       />
     );

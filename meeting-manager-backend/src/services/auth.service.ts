@@ -1,10 +1,10 @@
 import bcrypt from 'bcryptjs';
 import jwt, { type SignOptions } from 'jsonwebtoken';
 import { UnauthorizedError } from '../domain/errors.js';
-import { toPublicUser, type PublicUser } from '../domain/user.js';
+import { GUEST_EMAIL, roleFor, toPublicUser, type PublicUser } from '../domain/user.js';
 import type { UserRepository } from '../repositories/types.js';
 
-export const GUEST_EMAIL = 'guest@meetingmanager.local';
+export { GUEST_EMAIL };
 
 // Compared against when the email is unknown so response time doesn't reveal account existence.
 const DUMMY_HASH = bcrypt.hashSync('timing-safe-dummy', 10);
@@ -42,7 +42,7 @@ export class AuthService {
   verify(token: string): PublicUser {
     try {
       const payload = jwt.verify(token, this.config.jwtSecret) as TokenPayload;
-      return { id: payload.sub, email: payload.email, name: payload.name };
+      return { id: payload.sub, email: payload.email, name: payload.name, role: roleFor(payload.email) };
     } catch {
       throw new UnauthorizedError('Invalid or expired token');
     }

@@ -16,6 +16,23 @@ describe('Auth API', () => {
     expect(res.status).toBe(200);
     const me = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${res.body.token}`);
     expect(me.body.user.name).toBe('Guest');
+    expect(me.body.user.role).toBe('guest');
+  });
+
+  it('lets guests read meetings but not create them', async () => {
+    const { app } = await buildTestApp();
+    const { token } = (await request(app).post('/api/auth/guest')).body;
+    const auth = { Authorization: `Bearer ${token}` };
+
+    const list = await request(app).get('/api/meetings').set(auth);
+    expect(list.status).toBe(200);
+    expect((await request(app).get(`/api/meetings/${list.body.data[0].id}`).set(auth)).status).toBe(200);
+
+    const created = await request(app)
+      .post('/api/meetings')
+      .set(auth)
+      .send({ candidateName: 'Zed Test', position: 'Backend Engineer', startAt: hoursFromNow(2), endAt: hoursFromNow(3), type: 'onsite' });
+    expect(created.status).toBe(403);
   });
 });
 
@@ -36,6 +53,7 @@ describe('Meetings API', () => {
         location: 'Room 1',
       });
     expect(created.status).toBe(201);
+    expect(created.body.createdBy.email).toBe('recruiter@example.com');
     const id = created.body.id;
 
     const fetched = await request(app).get(`/api/meetings/${id}`).set(auth);

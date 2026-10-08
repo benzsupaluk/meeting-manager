@@ -18,6 +18,7 @@ const meeting = (id: string, status: Meeting["status"] = "pending"): Meeting => 
   type: "zoom",
   location: "",
   status,
+  createdBy: null,
   createdAt: "",
   updatedAt: "",
 });

@@ -44,6 +44,9 @@ export const useAuthStore = create<AuthState>()(
   ),
 );
 
+/** Guests can browse and join meetings but not schedule new ones. */
+export const useIsGuest = () => useAuthStore((s) => s.user?.role === "guest");
+
 /** Loads the persisted session from localStorage once mounted; returns whether it's ready. */
 export function useAuthHydration() {
   const hydrated = useAuthStore((s) => s.hasHydrated);

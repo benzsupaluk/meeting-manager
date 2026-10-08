@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Pencil, Save, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,8 @@ export function InterviewNotes({ candidateId, notes }: { candidateId: string; no
   const saveNotes = useCandidateStore((s) => s.saveNotes);
   const [draft, setDraft] = useState(notes);
   const [saving, setSaving] = useState(false);
+  // Existing notes open read-only; with none yet, go straight to the editor.
+  const [editing, setEditing] = useState(!notes.trim());
   const dirty = draft !== notes;
 
   const save = async () => {
@@ -27,14 +29,43 @@ export function InterviewNotes({ candidateId, notes }: { candidateId: string; no
     }
   };
 
+  const cancel = () => {
+    setDraft(notes);
+    setEditing(false);
+  };
+
+  if (!editing) {
+    return (
+      <Section
+        title="Interview Notes"
+        action={
+          <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
+            <Pencil />
+            Edit
+          </Button>
+        }
+      >
+        <div className="rounded-xl bg-muted px-4 py-3 text-sm whitespace-pre-line wrap-break-word">{notes}</div>
+      </Section>
+    );
+  }
+
   return (
     <Section
       title="Interview Notes"
       action={
-        <Button size="sm" onClick={save} disabled={!dirty || saving}>
-          {saving ? <Loader2 className="animate-spin" /> : <Save />}
-          Save
-        </Button>
+        <div className="flex gap-2">
+          {notes.trim() && (
+            <Button size="sm" variant="ghost" onClick={cancel} disabled={saving}>
+              <X />
+              Cancel
+            </Button>
+          )}
+          <Button size="sm" onClick={save} disabled={!dirty || saving}>
+            {saving ? <Loader2 className="animate-spin" /> : <Save />}
+            Save
+          </Button>
+        </div>
       }
     >
       <Textarea

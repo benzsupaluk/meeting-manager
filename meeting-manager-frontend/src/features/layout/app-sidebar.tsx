@@ -6,12 +6,14 @@ import { usePathname } from "next/navigation";
 import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/stores/auth-store";
+import { useAuthStore, useIsGuest } from "@/stores/auth-store";
 import { NAV_ITEMS } from "./nav-items";
 
 export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const logout = useAuthStore((s) => s.logout);
+  const isGuest = useIsGuest();
+  const navItems = isGuest ? NAV_ITEMS.filter((item) => !item.membersOnly) : NAV_ITEMS;
 
   return (
     <div className="flex h-full flex-col gap-6">
@@ -20,7 +22,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           Menu
         </p>
         <ul className="space-y-1">
-          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+          {navItems.map(({ href, label, icon: Icon }) => {
             const active =
               pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
             return (
@@ -58,18 +60,20 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         </button>
       </div>
 
-      <div className="mt-auto rounded-xl bg-linear-to-br from-primary to-[#e6b000] p-4 text-primary-foreground">
-        <p className="font-semibold">New interview?</p>
-        <p className="mt-1 text-xs text-primary-foreground/80">
-          Book a slot with a candidate in under a minute.
-        </p>
-        <Button asChild size="sm" variant="secondary" className="mt-3 w-full">
-          <Link href="/meetings/new" onClick={onNavigate}>
-            <CalendarPlus />
-            Schedule now
-          </Link>
-        </Button>
-      </div>
+      {!isGuest && (
+        <div className="mt-auto rounded-xl bg-linear-to-br from-primary to-[#e6b000] p-4 text-primary-foreground">
+          <p className="font-semibold">New interview?</p>
+          <p className="mt-1 text-xs text-primary-foreground/80">
+            Book a slot with a candidate in under a minute.
+          </p>
+          <Button asChild size="sm" variant="secondary" className="mt-3 w-full">
+            <Link href="/meetings/new" onClick={onNavigate}>
+              <CalendarPlus />
+              Schedule now
+            </Link>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

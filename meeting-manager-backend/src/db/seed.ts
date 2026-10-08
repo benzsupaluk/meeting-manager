@@ -34,7 +34,7 @@ const DEMO_MEETINGS: {
 export async function seedDemoData(repos: Repositories) {
   if (await repos.users.findByEmail(DEMO_USER.email)) return;
 
-  await repos.users.create({
+  const recruiter = await repos.users.create({
     email: DEMO_USER.email,
     name: DEMO_USER.name,
     passwordHash: await AuthService.hashPassword(DEMO_USER.password),
@@ -53,16 +53,19 @@ export async function seedDemoData(repos: Repositories) {
     start.setDate(start.getDate() + m.dayOffset);
     start.setHours(m.hour);
     const end = new Date(start.getTime() + m.duration * 60_000);
-    await repos.meetings.create({
-      title: `${m.position} Interview`,
-      description: m.description,
-      candidateId: candidate.id,
-      startAt: start.toISOString(),
-      endAt: end.toISOString(),
-      type: m.type,
-      location: m.location,
-      status: m.status,
-    });
+    await repos.meetings.create(
+      {
+        title: `${m.position} Interview`,
+        description: m.description,
+        candidateId: candidate.id,
+        startAt: start.toISOString(),
+        endAt: end.toISOString(),
+        type: m.type,
+        location: m.location,
+        status: m.status,
+      },
+      recruiter.id,
+    );
   }
 
   const alice = await repos.candidates.findOrCreate('Alice Johnson', 'Software Engineer');

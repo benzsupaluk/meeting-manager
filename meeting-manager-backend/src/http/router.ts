@@ -3,7 +3,7 @@ import type { Services } from '../container.js';
 import { AuthController } from './controllers/auth.controller.js';
 import { CandidateController } from './controllers/candidate.controller.js';
 import { MeetingController } from './controllers/meeting.controller.js';
-import { requireAuth } from './middleware/auth.js';
+import { requireAuth, requireMember } from './middleware/auth.js';
 
 export function createRouter(services: Services): Router {
   const router = Router();
@@ -24,7 +24,7 @@ export function createRouter(services: Services): Router {
   router.use(authenticated);
 
   router.get('/meetings', meetings.list);
-  router.post('/meetings', meetings.create);
+  router.post('/meetings', requireMember, meetings.create);
   router.get('/meetings/:id', meetings.get);
   router.patch('/meetings/:id', meetings.update);
   router.delete('/meetings/:id', meetings.delete);

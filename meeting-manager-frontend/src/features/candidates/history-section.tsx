@@ -1,6 +1,7 @@
 import { CalendarCheck, MessageSquareText, Star } from "lucide-react";
 import { formatDate, formatMeetingRange } from "@/lib/format";
 import type { Feedback, Meeting } from "@/lib/types";
+import { MeetingCreator } from "@/features/meetings/meeting-creator";
 import { StatusBadge } from "@/features/meetings/status-badge";
 import { Section } from "./section";
 
@@ -29,6 +30,7 @@ export function HistorySection({ pastMeetings, feedback }: { pastMeetings: Meeti
                   <StatusBadge status={entry.meeting.status} />
                 </div>
                 <p className="text-sm">{formatMeetingRange(entry.meeting.startAt, entry.meeting.endAt)}</p>
+                <MeetingCreator meeting={entry.meeting} />
                 {entry.meeting.description && <p className="text-sm text-muted-foreground">{entry.meeting.description}</p>}
               </li>
             ) : (

@@ -5,7 +5,7 @@ import type { User } from '../domain/user.js';
 export interface MeetingRepository {
   list(query: MeetingQuery): Promise<{ items: Meeting[]; total: number }>;
   findById(id: string): Promise<Meeting | null>;
-  create(input: MeetingWrite): Promise<Meeting>;
+  create(input: MeetingWrite, createdById: string | null): Promise<Meeting>;
   update(id: string, input: MeetingWrite): Promise<Meeting | null>;
   delete(id: string): Promise<boolean>;
 }

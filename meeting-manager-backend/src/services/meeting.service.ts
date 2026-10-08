@@ -42,7 +42,7 @@ export class MeetingService {
     return meeting;
   }
 
-  async create(input: MeetingInput): Promise<Meeting> {
+  async create(input: MeetingInput, createdById: string | null = null): Promise<Meeting> {
     const candidate = await this.resolveCandidate(input);
     const write: MeetingWrite = {
       title: input.title?.trim() || `${candidate.position} Interview`,
@@ -55,7 +55,7 @@ export class MeetingService {
       status: input.status ?? 'pending',
     };
     assertTimeRange(write);
-    return this.meetings.create(write);
+    return this.meetings.create(write, createdById);
   }
 
   async update(id: string, patch: MeetingPatch): Promise<Meeting> {

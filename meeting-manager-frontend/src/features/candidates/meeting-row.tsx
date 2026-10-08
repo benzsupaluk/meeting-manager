@@ -1,5 +1,6 @@
 import { CalendarClock } from "lucide-react";
 import { MeetingActionsMenu } from "@/features/meetings/meeting-actions-menu";
+import { MeetingCreator } from "@/features/meetings/meeting-creator";
 import { MeetingLocation } from "@/features/meetings/meeting-location";
 import { StatusBadge } from "@/features/meetings/status-badge";
 import { formatMeetingRange } from "@/lib/format";
@@ -21,6 +22,7 @@ export function MeetingRow({ meeting, highlighted, onChanged }: { meeting: Meeti
           {formatMeetingRange(meeting.startAt, meeting.endAt)}
         </p>
         <MeetingLocation meeting={meeting} />
+        <MeetingCreator meeting={meeting} />
         {meeting.description && <p className="text-sm text-muted-foreground">{meeting.description}</p>}
       </div>
       <div className="flex items-center gap-2 self-start sm:self-center">

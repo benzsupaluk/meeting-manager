@@ -6,6 +6,13 @@ export type MeetingStatus = (typeof MEETING_STATUSES)[number];
 export const MEETING_TYPES = ['onsite', 'zoom', 'google_meet'] as const;
 export type MeetingType = (typeof MEETING_TYPES)[number];
 
+/** Who booked the meeting; null for legacy rows or deleted users. */
+export interface MeetingCreator {
+  id: string;
+  name: string;
+  email: string;
+}
+
 export interface Meeting {
   id: string;
   title: string;
@@ -16,6 +23,7 @@ export interface Meeting {
   type: MeetingType;
   location: string;
   status: MeetingStatus;
+  createdBy: MeetingCreator | null;
   createdAt: string;
   updatedAt: string;
 }

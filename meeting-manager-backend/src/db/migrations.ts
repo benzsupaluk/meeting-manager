@@ -54,6 +54,12 @@ const MIGRATIONS: { id: string; sql: string }[] = [
       CREATE INDEX feedback_candidate_id_idx ON feedback (candidate_id);
     `,
   },
+  {
+    id: '002_meeting_created_by',
+    sql: `
+      ALTER TABLE meetings ADD COLUMN created_by UUID REFERENCES users(id) ON DELETE SET NULL;
+    `,
+  },
 ];
 
 export async function runMigrations(pool: Pool): Promise<void> {

@@ -20,6 +20,7 @@ import { useMeetingActions } from "@/features/meetings/use-meeting-actions";
 import { MEETING_STATUS_LABEL } from "@/lib/constants";
 import { formatMeetingRange, initials } from "@/lib/format";
 import type { CandidateProfile as Profile, Meeting, MeetingStatus } from "@/lib/types";
+import { useIsGuest } from "@/stores/auth-store";
 import { useCandidateStore } from "@/stores/candidate-store";
 import { FeedbackDialog } from "./feedback-dialog";
 import { HistorySection } from "./history-section";
@@ -51,6 +52,7 @@ export function CandidateProfile({
   const error = useCandidateStore((s) => s.error);
   const fetchProfile = useCandidateStore((s) => s.fetchProfile);
   const actions = useMeetingActions();
+  const isGuest = useIsGuest();
   const [dialog, setDialog] = useState<"cancel" | "feedback" | null>(null);
 
   const refresh = useCallback(() => void fetchProfile(candidateId), [fetchProfile, candidateId]);
@@ -73,6 +75,10 @@ export function CandidateProfile({
 
   const focused = pickFocusedMeeting(profile, meetingId);
   const canCancel = focused && (focused.status === "pending" || focused.status === "confirmed");
+  // Guests can move a meeting between statuses but not cancel it (an already-cancelled one still shows its status).
+  const statusOptions = isGuest
+    ? MEETING_STATUSES.filter((s) => s !== "cancelled" || s === focused?.status)
+    : MEETING_STATUSES;
 
   return (
     <div className="space-y-4">
@@ -85,7 +91,7 @@ export function CandidateProfile({
 
       <header className="flex flex-col gap-5 rounded-2xl border bg-card p-5 sm:p-6 md:flex-row md:items-center">
         <Avatar className="size-16 rounded-2xl">
-          <AvatarFallback className="rounded-2xl bg-primary text-xl font-semibold text-primary-foreground">
+          <AvatarFallback className="rounded-lg bg-primary text-xl font-semibold text-primary-foreground">
             {initials(profile.name)}
           </AvatarFallback>
         </Avatar>
@@ -104,32 +110,38 @@ export function CandidateProfile({
           </div>
         </div>
         <div className="flex flex-col-reverse items-end gap-3">
-          {focused && (
-            <Select
-              value={focused.status}
-              onValueChange={(v) => {
-                const status = v as MeetingStatus;
-                if (status === focused.status) return;
-                // Cancelling keeps its confirmation step.
-                if (status === "cancelled") setDialog("cancel");
-                else actions.setStatus(focused, status).then(refresh, () => {});
-              }}
-            >
-              <SelectTrigger className="h-9! w-40" aria-label="Meeting status">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent alignItemWithTrigger={false} align="end">
-                {MEETING_STATUSES.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    <StatusBadge status={s} />
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {isGuest ? (
+            <>{focused?.status && <StatusBadge status={focused?.status} />}</>
+          ) : (
+            <>
+              {focused && (
+                <Select
+                  value={focused.status}
+                  onValueChange={(v) => {
+                    const status = v as MeetingStatus;
+                    if (status === focused.status) return;
+                    // Cancelling keeps its confirmation step.
+                    if (status === "cancelled") setDialog("cancel");
+                    else actions.setStatus(focused, status).then(refresh, () => {});
+                  }}
+                >
+                  <SelectTrigger className="h-9! w-40" aria-label="Meeting status">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent alignItemWithTrigger={false} align="end">
+                    {statusOptions.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        <StatusBadge status={s} />
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </>
           )}
 
           <div className="flex flex-wrap gap-2">
-            {focused ? (
+            {isGuest ? null : focused ? (
               <Button asChild variant="outline">
                 <Link href={`/meetings/${focused.id}/edit`}>
                   <Pencil />
@@ -142,10 +154,16 @@ export function CandidateProfile({
                 Edit Meeting
               </Button>
             )}
-            <Button variant="destructive" disabled={!canCancel} onClick={() => setDialog("cancel")}>
-              <CircleX />
-              Cancel Meeting
-            </Button>
+            {!isGuest && (
+              <Button
+                variant="destructive"
+                disabled={!canCancel}
+                onClick={() => setDialog("cancel")}
+              >
+                <CircleX />
+                Cancel Meeting
+              </Button>
+            )}
             <Button onClick={() => setDialog("feedback")}>
               <MessageSquarePlus />
               Add Feedback
@@ -159,9 +177,11 @@ export function CandidateProfile({
           <Section
             title="Meeting Info"
             action={
-              <Button asChild size="sm" variant="outline">
-                <Link href="/meetings/new">Schedule another</Link>
-              </Button>
+              !isGuest && (
+                <Button asChild size="sm" variant="outline">
+                  <Link href="/meetings/new">Schedule another</Link>
+                </Button>
+              )
             }
           >
             {profile.upcomingMeetings.length === 0 ? (

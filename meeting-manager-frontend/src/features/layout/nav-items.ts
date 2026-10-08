@@ -4,11 +4,13 @@ export interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
+  /** Hidden from the guest account. */
+  membersOnly?: boolean;
 }
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/meetings/new", label: "Schedule Meeting", icon: CalendarPlus },
+  { href: "/meetings/new", label: "Schedule Meeting", icon: CalendarPlus, membersOnly: true },
 ];
 
 /** Header title/subtitle per route; first matching prefix wins. */

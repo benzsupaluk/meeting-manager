@@ -69,18 +69,28 @@ class InMemoryCandidateRepository implements CandidateRepository {
   }
 }
 
-type StoredMeeting = MeetingWrite & { id: string; createdAt: string; updatedAt: string };
+type StoredMeeting = MeetingWrite & {
+  id: string;
+  createdById: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
 
 class InMemoryMeetingRepository implements MeetingRepository {
   private readonly meetings = new Map<string, StoredMeeting>();
 
-  constructor(private readonly candidates: InMemoryCandidateRepository) {}
+  constructor(
+    private readonly candidates: InMemoryCandidateRepository,
+    private readonly users: InMemoryUserRepository,
+  ) {}
 
-  private hydrate({ candidateId, ...m }: StoredMeeting): Meeting {
+  private hydrate({ candidateId, createdById, ...m }: StoredMeeting): Meeting {
     const c = this.candidates.candidates.get(candidateId);
+    const u = createdById ? this.users.users.get(createdById) : undefined;
     return {
       ...m,
       candidate: { id: candidateId, name: c?.name ?? 'Unknown', position: c?.position ?? '' },
+      createdBy: u ? { id: u.id, name: u.name, email: u.email } : null,
     };
   }
 
@@ -116,9 +126,9 @@ class InMemoryMeetingRepository implements MeetingRepository {
     return m ? this.hydrate(m) : null;
   }
 
-  async create(input: MeetingWrite) {
+  async create(input: MeetingWrite, createdById: string | null) {
     const ts = now();
-    const stored: StoredMeeting = { ...input, id: randomUUID(), createdAt: ts, updatedAt: ts };
+    const stored: StoredMeeting = { ...input, id: randomUUID(), createdById, createdAt: ts, updatedAt: ts };
     this.meetings.set(stored.id, stored);
     return this.hydrate(stored);
   }
@@ -137,7 +147,7 @@ class InMemoryMeetingRepository implements MeetingRepository {
 }
 
 class InMemoryUserRepository implements UserRepository {
-  private readonly users = new Map<string, User>();
+  readonly users = new Map<string, User>();
 
   async findByEmail(email: string) {
     return [...this.users.values()].find((u) => sameKey(u.email, email)) ?? null;
@@ -156,10 +166,11 @@ class InMemoryUserRepository implements UserRepository {
 
 export const createMemoryRepositories = (): Repositories => {
   const candidates = new InMemoryCandidateRepository();
+  const users = new InMemoryUserRepository();
   return {
     candidates,
-    meetings: new InMemoryMeetingRepository(candidates),
-    users: new InMemoryUserRepository(),
+    meetings: new InMemoryMeetingRepository(candidates, users),
+    users,
     close: async () => {},
   };
 };
