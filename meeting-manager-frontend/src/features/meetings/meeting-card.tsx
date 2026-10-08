@@ -9,15 +9,28 @@ import { cn } from "@/lib/utils";
 import { MeetingActionsMenu } from "./meeting-actions-menu";
 import { MeetingLocation } from "./meeting-location";
 import { StatusBadge } from "./status-badge";
+import { useRouter } from "next/navigation";
+
+const INTERACTIVE_SELECTOR =
+  'a, button, input, select, textarea, label, [role="button"], [role="menuitem"], [role="link"]';
 
 export const MeetingCard = memo(function MeetingCard({ meeting }: { meeting: Meeting }) {
+  const router = useRouter();
   const { candidate } = meeting;
   const inactive = meeting.status === "cancelled";
   const past = new Date(meeting.endAt).getTime() < Date.now();
+  const detailsHref = `/candidates/${candidate.id}?meeting=${meeting.id}`;
 
   return (
-    <Link
-      href={`/candidates/${candidate.id}?meeting=${meeting.id}`}
+    <article
+      onClick={(e) => {
+        const target = e.target as HTMLElement;
+        // Portaled content (actions menu, dialogs) still bubbles through React — ignore it.
+        if (!e.currentTarget.contains(target)) return;
+        // Let buttons, links and other controls inside the card handle their own clicks.
+        if (target.closest(INTERACTIVE_SELECTOR)) return;
+        router.push(detailsHref);
+      }}
       className={cn(
         "flex flex-col gap-4 rounded-2xl border bg-card p-5 transition-shadow hover:shadow-lg hover:shadow-slate-200/70 cursor-pointer!",
         past && "border-slate-200 bg-slate-100 text-slate-500 grayscale",
@@ -52,10 +65,10 @@ export const MeetingCard = memo(function MeetingCard({ meeting }: { meeting: Mee
 
       <div className="mt-auto flex items-center justify-between gap-3 border-t pt-4">
         <StatusBadge status={meeting.status} />
-        <Button variant="outline" size="sm">
-          View Details
+        <Button asChild variant="outline" size="sm">
+          <Link href={detailsHref}>View Details</Link>
         </Button>
       </div>
-    </Link>
+    </article>
   );
 });

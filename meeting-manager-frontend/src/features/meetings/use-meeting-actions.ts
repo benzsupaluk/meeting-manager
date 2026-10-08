@@ -2,7 +2,8 @@
 
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/api/client";
-import type { Meeting } from "@/lib/types";
+import { MEETING_STATUS_LABEL } from "@/lib/constants";
+import type { Meeting, MeetingStatus } from "@/lib/types";
 import { useMeetingsStore } from "@/stores/meetings-store";
 
 /** Store mutations wrapped with user feedback; rethrows so dialogs can stay open on failure. */
@@ -26,6 +27,11 @@ export function useMeetingActions() {
       run(() => updateMeeting(meeting.id, { status: "cancelled" }), `Meeting with ${meeting.candidate.name} cancelled`),
     confirm: (meeting: Meeting) =>
       run(() => updateMeeting(meeting.id, { status: "confirmed" }), `Meeting with ${meeting.candidate.name} confirmed`),
+    setStatus: (meeting: Meeting, status: MeetingStatus) =>
+      run(
+        () => updateMeeting(meeting.id, { status }),
+        `Meeting marked as ${MEETING_STATUS_LABEL[status].toLowerCase()}`,
+      ),
     remove: (meeting: Meeting) => run(() => deleteMeeting(meeting.id), "Meeting deleted"),
   };
 }

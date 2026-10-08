@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TimeSelect, addMinutes } from "@/components/time-select";
 import { Textarea } from "@/components/ui/textarea";
 import { CandidateAutocomplete } from "@/features/candidates/candidate-autocomplete";
 import { ApiError, getErrorMessage } from "@/lib/api/client";
@@ -63,6 +64,7 @@ export function MeetingForm({ meeting }: MeetingFormProps) {
     register,
     handleSubmit,
     setValue,
+    getValues,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<MeetingFormValues>({
@@ -71,6 +73,7 @@ export function MeetingForm({ meeting }: MeetingFormProps) {
   });
   const type = useWatch({ control, name: "type" });
   const position = useWatch({ control, name: "position" });
+  const startTime = useWatch({ control, name: "startTime" });
 
   const onSubmit = async (values: MeetingFormValues) => {
     const payload = formValuesToPayload(values);
@@ -202,26 +205,43 @@ export function MeetingForm({ meeting }: MeetingFormProps) {
 
           <Field data-invalid={!!errors.startTime}>
             <FieldLabel htmlFor="startTime">Start time</FieldLabel>
-            <Input
-              id="startTime"
-              type="time"
-              step={300}
-              className="h-10"
-              aria-invalid={!!errors.startTime}
-              {...register("startTime")}
+            <Controller
+              control={control}
+              name="startTime"
+              render={({ field }) => (
+                <TimeSelect
+                  id="startTime"
+                  value={field.value}
+                  invalid={!!errors.startTime}
+                  placeholder="Pick a start time"
+                  onChange={(start) => {
+                    field.onChange(start);
+                    // Keep the end after the start, preserving a 1-hour default slot.
+                    if (getValues("endTime") <= start) {
+                      setValue("endTime", addMinutes(start, 60), { shouldValidate: true });
+                    }
+                  }}
+                />
+              )}
             />
             <FieldError errors={[errors.startTime]} />
           </Field>
 
           <Field data-invalid={!!errors.endTime}>
             <FieldLabel htmlFor="endTime">End time</FieldLabel>
-            <Input
-              id="endTime"
-              type="time"
-              step={300}
-              className="h-10"
-              aria-invalid={!!errors.endTime}
-              {...register("endTime")}
+            <Controller
+              control={control}
+              name="endTime"
+              render={({ field }) => (
+                <TimeSelect
+                  id="endTime"
+                  value={field.value}
+                  onChange={field.onChange}
+                  after={startTime}
+                  invalid={!!errors.endTime}
+                  placeholder="Pick an end time"
+                />
+              )}
             />
             <FieldError errors={[errors.endTime]} />
           </Field>

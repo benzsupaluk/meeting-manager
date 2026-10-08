@@ -8,15 +8,26 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { StatusBadge } from "@/features/meetings/status-badge";
 import { useMeetingActions } from "@/features/meetings/use-meeting-actions";
+import { MEETING_STATUS_LABEL } from "@/lib/constants";
 import { formatMeetingRange, initials } from "@/lib/format";
-import type { CandidateProfile as Profile, Meeting } from "@/lib/types";
+import type { CandidateProfile as Profile, Meeting, MeetingStatus } from "@/lib/types";
 import { useCandidateStore } from "@/stores/candidate-store";
 import { FeedbackDialog } from "./feedback-dialog";
 import { HistorySection } from "./history-section";
 import { InterviewNotes } from "./interview-notes";
 import { MeetingRow } from "./meeting-row";
 import { Section } from "./section";
+
+const MEETING_STATUSES = Object.keys(MEETING_STATUS_LABEL) as MeetingStatus[];
 
 /** The meeting the header buttons act on: the one linked from the dashboard, else the next active one. */
 function pickFocusedMeeting(profile: Profile, meetingId?: string): Meeting | undefined {
@@ -28,7 +39,13 @@ function pickFocusedMeeting(profile: Profile, meetingId?: string): Meeting | und
   );
 }
 
-export function CandidateProfile({ candidateId, meetingId }: { candidateId: string; meetingId?: string }) {
+export function CandidateProfile({
+  candidateId,
+  meetingId,
+}: {
+  candidateId: string;
+  meetingId?: string;
+}) {
   const profile = useCandidateStore((s) => s.profiles[candidateId]);
   const loading = useCandidateStore((s) => s.loadingId === candidateId);
   const error = useCandidateStore((s) => s.error);
@@ -86,28 +103,54 @@ export function CandidateProfile({ candidateId, meetingId }: { candidateId: stri
             )}
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {focused ? (
-            <Button asChild variant="outline">
-              <Link href={`/meetings/${focused.id}/edit`}>
+        <div className="flex flex-col-reverse items-end gap-3">
+          {focused && (
+            <Select
+              value={focused.status}
+              onValueChange={(v) => {
+                const status = v as MeetingStatus;
+                if (status === focused.status) return;
+                // Cancelling keeps its confirmation step.
+                if (status === "cancelled") setDialog("cancel");
+                else actions.setStatus(focused, status).then(refresh, () => {});
+              }}
+            >
+              <SelectTrigger className="h-9! w-40" aria-label="Meeting status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent alignItemWithTrigger={false} align="end">
+                {MEETING_STATUSES.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    <StatusBadge status={s} />
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            {focused ? (
+              <Button asChild variant="outline">
+                <Link href={`/meetings/${focused.id}/edit`}>
+                  <Pencil />
+                  Edit Meeting
+                </Link>
+              </Button>
+            ) : (
+              <Button variant="outline" disabled>
                 <Pencil />
                 Edit Meeting
-              </Link>
+              </Button>
+            )}
+            <Button variant="destructive" disabled={!canCancel} onClick={() => setDialog("cancel")}>
+              <CircleX />
+              Cancel Meeting
             </Button>
-          ) : (
-            <Button variant="outline" disabled>
-              <Pencil />
-              Edit Meeting
+            <Button onClick={() => setDialog("feedback")}>
+              <MessageSquarePlus />
+              Add Feedback
             </Button>
-          )}
-          <Button variant="destructive" disabled={!canCancel} onClick={() => setDialog("cancel")}>
-            <CircleX />
-            Cancel Meeting
-          </Button>
-          <Button onClick={() => setDialog("feedback")}>
-            <MessageSquarePlus />
-            Add Feedback
-          </Button>
+          </div>
         </div>
       </header>
 
@@ -122,16 +165,27 @@ export function CandidateProfile({ candidateId, meetingId }: { candidateId: stri
             }
           >
             {profile.upcomingMeetings.length === 0 ? (
-              <p className="rounded-xl bg-muted px-4 py-6 text-center text-sm">No upcoming meetings.</p>
+              <p className="rounded-xl bg-muted px-4 py-6 text-center text-sm">
+                No upcoming meetings.
+              </p>
             ) : (
               <ul className="space-y-3">
                 {profile.upcomingMeetings.map((m) => (
-                  <MeetingRow key={m.id} meeting={m} highlighted={m.id === focused?.id} onChanged={refresh} />
+                  <MeetingRow
+                    key={m.id}
+                    meeting={m}
+                    highlighted={m.id === focused?.id}
+                    onChanged={refresh}
+                  />
                 ))}
               </ul>
             )}
           </Section>
-          <InterviewNotes key={profile.updatedAt} candidateId={profile.id} notes={profile.interviewNotes} />
+          <InterviewNotes
+            key={profile.updatedAt}
+            candidateId={profile.id}
+            notes={profile.interviewNotes}
+          />
         </div>
         <HistorySection pastMeetings={profile.pastMeetings} feedback={profile.feedback} />
       </div>

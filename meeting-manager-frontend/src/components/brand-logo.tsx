@@ -7,7 +7,7 @@ export function BrandLogo({ className, compact = false }: { className?: string; 
       <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
         <CalendarCheck2 className="size-5" />
       </span>
-      {!compact && <span className="text-lg font-semibold tracking-tight text-heading">MeetFlow</span>}
+      {!compact && <span className="text-lg font-semibold tracking-tight text-heading">EggMeeting</span>}
     </div>
   );
 }
