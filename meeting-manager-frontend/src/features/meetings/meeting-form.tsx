@@ -31,7 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CandidateAutocomplete } from "@/features/candidates/candidate-autocomplete";
 import { ApiError, getErrorMessage } from "@/lib/api/client";
 import { MEETING_STATUS_LABEL, MEETING_TYPE_LABEL, POSITIONS } from "@/lib/constants";
-import type { Meeting, MeetingType } from "@/lib/types";
+import type { CandidateSummary, Meeting, MeetingType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useMeetingsStore } from "@/stores/meetings-store";
 import {
@@ -51,9 +51,11 @@ const TYPE_OPTIONS: { value: MeetingType; icon: LucideIcon; hint: string }[] = [
 interface MeetingFormProps {
   /** When provided, the form edits this meeting; otherwise it books a new one. */
   meeting?: Meeting;
+  /** Prefills a new meeting for this candidate and returns to their profile once booked. */
+  candidate?: CandidateSummary;
 }
 
-export function MeetingForm({ meeting }: MeetingFormProps) {
+export function MeetingForm({ meeting, candidate }: MeetingFormProps) {
   const router = useRouter();
   const createMeeting = useMeetingsStore((s) => s.createMeeting);
   const updateMeeting = useMeetingsStore((s) => s.updateMeeting);
@@ -69,7 +71,16 @@ export function MeetingForm({ meeting }: MeetingFormProps) {
     formState: { errors, isSubmitting },
   } = useForm<MeetingFormValues>({
     resolver: zodResolver(MeetingFormSchema),
-    defaultValues: meeting ? meetingToFormValues(meeting) : defaultMeetingFormValues(),
+    defaultValues: meeting
+      ? meetingToFormValues(meeting)
+      : {
+          ...defaultMeetingFormValues(),
+          ...(candidate && {
+            candidateId: candidate.id,
+            candidateName: candidate.name,
+            position: candidate.position,
+          }),
+        },
   });
   const type = useWatch({ control, name: "type" });
   const position = useWatch({ control, name: "position" });
@@ -82,7 +93,13 @@ export function MeetingForm({ meeting }: MeetingFormProps) {
         ? await updateMeeting(meeting.id, payload)
         : await createMeeting(payload);
       toast.success(isEdit ? "Meeting updated" : `Meeting booked with ${saved.candidate.name}`);
-      router.push(isEdit ? `/candidates/${saved.candidate.id}?meeting=${saved.id}` : "/dashboard");
+      router.push(
+        isEdit
+          ? `/candidates/${saved.candidate.id}?meeting=${saved.id}`
+          : candidate
+            ? `/candidates/${candidate.id}`
+            : "/dashboard",
+      );
     } catch (error) {
       // Map server-side field errors back onto the form where possible.
       if (error instanceof ApiError && error.details?.length) {

@@ -179,7 +179,18 @@ export function CandidateProfile({
             action={
               !isGuest && (
                 <Button asChild size="sm" variant="outline">
-                  <Link href="/meetings/new">Schedule another</Link>
+                  <Link
+                    href={{
+                      pathname: "/meetings/new",
+                      query: {
+                        candidateId: profile.id,
+                        candidateName: profile.name,
+                        position: profile.position,
+                      },
+                    }}
+                  >
+                    Schedule another
+                  </Link>
                 </Button>
               )
             }
